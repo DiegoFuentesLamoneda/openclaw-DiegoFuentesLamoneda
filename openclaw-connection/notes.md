@@ -27,6 +27,6 @@
 ## Pendiente
 
 - **Corriendo como root**: el workspace es `/root/.openclaw/workspace`. El arreglo de fondo sería un usuario dedicado sin privilegios.
-- **Dos servidores MCP en Zapier**: la autorización OAuth creó uno nuevo junto al que usaba `mcporter`. Hay que confirmar cuál recibe tráfico (pestaña *History*) y borrar el otro.
+- **Dos entradas en el panel de Zapier, pero un solo servidor**: la autorización OAuth añadió "Openclaw mcp" junto al "Openclaw MCP Server" original. El *History* confirma que todo el tráfico —incluida la llamada nativa con `exec` ya cerrado— va al original, y que la entrada nueva no ha recibido nada. Es el registro del **cliente** OAuth, no un servidor paralelo: **no borrarla**, o se revocaría el acceso de la conexión nativa.
 - **Revisar el mínimo privilegio**: el MCP nativo expone 17 herramientas y el panel de Zapier lista bastantes más de las dos acciones documentadas arriba. `openclaw mcp add --include` permite filtrar por servidor.
 - **Warns que quedan y por qué se dejan**: `trusted_proxies_missing` es un falso positivo mientras el gateway esté en loopback sin proxy inverso; el plugin `groq` sin pinear es higiene de dependencias, no un riesgo activo; y el heurístico de multi-usuario no se apagará mientras haya un grupo de Telegram en la allowlist.
