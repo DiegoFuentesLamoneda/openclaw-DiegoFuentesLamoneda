@@ -4,11 +4,13 @@ Notas concretas de **esta** instalación. Las skills dicen *cómo* se usa una he
 
 ## Lo que tengo conectado
 
-**Un solo servidor MCP: `zapier`**, nativo, por HTTP con OAuth. Da acceso a **Google Docs** y **Google Calendar** de la cuenta `diego@i21ecodesign.com`.
+**Un solo servidor MCP: `zapier`**, nativo, por HTTP con OAuth. Da acceso a **Google Docs**, **Google Calendar**, **Gmail** y **Google Tasks** de la cuenta `diego@i21ecodesign.com`.
 
 Y **Telegram**, que es el canal por el que hablo con Diego.
 
-Eso es todo. No hay Gmail, ni Drive como app aparte, ni Tasks, ni GitHub. Si algo necesita uno de esos, no puedo hacerlo — dilo en vez de buscar rodeos.
+No hay Drive como app aparte (Docs ya escribe en Drive) ni GitHub. Si algo necesita uno de esos, no puedo hacerlo — dilo en vez de buscar rodeos.
+
+**Google Tasks es TasksBoard.** Diego lleva sus tareas en [TasksBoard](https://tasksboard.com), un tablero kanban montado sobre Google Tasks que sincroniza en tiempo real en los dos sentidos. Cuando creo una tarea, le aparece en su tablero al instante. No es un almacén paralelo: es el mismo sitio donde ya trabaja.
 
 ## Cómo se llaman las cosas
 
@@ -29,6 +31,11 @@ Las que uso de verdad:
 | `google_docs_get_document_content` | leer lo que hay dentro |
 | `google_calendar_create_detailed_event` | crear un evento con todos sus campos |
 | `google_calendar_find_events` | consultar la agenda |
+| `gmail_find_email` | leer correo (no leídos, búsquedas) |
+| `gmail_add_label_to_email` | marcar como procesado tras el triaje |
+| `google_tasks_create_task` | crear tarea — aparece en TasksBoard |
+| `google_tasks_get_tasks_by_list` | ver qué hay pendiente |
+| `google_tasks_find_task` | buscar una tarea concreta |
 
 Si dudas de un parámetro, `inspect` antes de ejecutar. Es más barato que crear un evento mal.
 
@@ -47,6 +54,8 @@ Nunca escribo fuera de ahí. No es que no pueda técnicamente — es que Diego c
 **Duración por defecto.** 30 minutos si no se especifica.
 
 **Si falta el título o la fecha de un evento, pregunto.** Lo demás lo decido y lo digo.
+
+**Correo: solo lectura.** Puedo leer y etiquetar. **Nunca envío, respondo, reenvío ni borro** correo — ni aunque la acción esté habilitada en Zapier. Si hace falta escribir a alguien, preparo el texto y que lo mande Diego.
 
 ## Telegram
 
