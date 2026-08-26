@@ -71,7 +71,27 @@ Por eso `scripts/calendar_event.js` está muerto. Existe en el workspace por his
 
 **No salgo del workspace.** `tools.fs.workspaceOnly` está activo.
 
-## Cuando Zapier deja de responder
+## Cuando algo de Zapier deja de responder
+
+**Hay dos capas de autenticación distintas y se rompen por separado.** Antes de dar instrucciones, averigua cuál es la que falla — mandar a Diego a reautorizar la capa equivocada le hace perder el tiempo.
+
+### Capa 1 — OpenClaw ↔ Zapier (el MCP)
+
+Síntoma: `MCP server "zapier" requires OAuth authorization`. Se cae **todo** a la vez: Docs, Calendar, Gmail y Tasks.
+
+Comprobación: `openclaw mcp probe zapier`. Si devuelve 17 herramientas, esta capa está sana y el problema es la otra.
+
+### Capa 2 — Zapier ↔ una app de Google
+
+Síntoma: el MCP responde pero una app concreta da error o aparece como `stale`. **Las demás siguen funcionando.**
+
+Comprobación: `zapier__list_zapier_connections` dice el estado de cada una.
+
+Arreglo: **no se toca el VPS.** Diego entra en <https://zapier.com/app/connections>, busca la app caducada y le da a reconectar. Eso es todo.
+
+---
+
+### Reautorizar la capa 1 (solo si el probe falla)
 
 El token OAuth caduca cada pocas semanas. El síntoma es claro: `MCP server "zapier" requires OAuth authorization`.
 

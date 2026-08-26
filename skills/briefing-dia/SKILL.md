@@ -22,7 +22,7 @@ Las horas van siempre en **`Europe/Madrid`**. Si la API devuelve UTC, conviérte
 
 ## Formato
 
-Para el móvil: párrafos cortos, **sin tablas**, sin encabezados de Markdown.
+Para el móvil: párrafos cortos, **sin tablas**, sin encabezados de Markdown y **sin líneas separadoras** (`---`), que en Telegram no se renderizan y aparecen como guiones sueltos. Para separar días basta con una línea en blanco y el día en negrita.
 
 - **Lo siguiente, destacado.** Lo primero que lee debe ser qué le toca ahora y a qué hora.
 - **Después, el resto en orden cronológico.** Hora y título. Sin volcar descripciones enteras.

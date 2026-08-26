@@ -63,4 +63,11 @@ Si no hay correo no leído sin triar, dilo en una línea y ya. *"Bandeja limpia,
 
 ## Si algo falla
 
-Si Gmail no responde o el token de Zapier ha caducado, **dilo tal cual** y pasa los pasos de reautorización de `TOOLS.md`. No finjas que el triaje salió bien con cero resultados: son cosas distintas y Diego necesita saber cuál es.
+Si Gmail no responde, **averigua qué capa ha fallado antes de decir nada** — están explicadas en `TOOLS.md` y el arreglo es distinto:
+
+- ¿Falla todo el MCP, o solo Gmail? Si Calendar y Tasks responden, el MCP está bien y lo caducado es la conexión de Zapier con Gmail. Ahí no hay que tocar el VPS: se reconecta en <https://zapier.com/app/connections>.
+- Solo si se cae todo a la vez toca reautorizar el MCP desde el servidor.
+
+Mandar a Diego a reautorizar la capa equivocada le hace perder el tiempo. Comprueba con `zapier__list_zapier_connections` antes de dar instrucciones.
+
+Y no finjas que el triaje salió bien con cero resultados: una bandeja limpia y un fallo de conexión son cosas distintas.
