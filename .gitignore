@@ -1,0 +1,7 @@
+# Personal — se queda en el VPS, fuera del repositorio publico del curso
+tareas.md
+ideas/
+media/
+
+# Codigo muerto: atajo por shell, inservible desde que tools.exec.mode = "deny"
+scripts/
