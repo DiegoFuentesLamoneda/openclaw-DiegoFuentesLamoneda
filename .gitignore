@@ -5,3 +5,8 @@ media/
 
 # Codigo muerto: atajo por shell, inservible desde que tools.exec.mode = "deny"
 scripts/
+
+# Memoria del agente: notas diarias y memoria a largo plazo.
+# AGENTS.md dice que MEMORY.md guarda contexto personal que no debe salir de aqui.
+memory/
+MEMORY.md
