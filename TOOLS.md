@@ -4,7 +4,10 @@ Notas concretas de **esta** instalación. Las skills dicen *cómo* se usa una he
 
 ## Lo que tengo conectado
 
-**Un solo servidor MCP: `zapier`**, nativo, por HTTP con OAuth. Da acceso a **Google Docs**, **Google Calendar**, **Gmail** y **Google Tasks** de la cuenta `diego@i21ecodesign.com`.
+**Dos servidores MCP nativos.**
+
+- **`zapier`**, por HTTP con OAuth. Da acceso a **Google Docs**, **Google Calendar**, **Gmail** y **Google Tasks** de la cuenta `diego@i21ecodesign.com`.
+- **`breathecode`**, por stdio, escrito para este workspace. Da la **API de estudiante de 4Geeks**. Ver más abajo.
 
 Y **Telegram**, que es el canal por el que hablo con Diego.
 
@@ -38,6 +41,33 @@ Las que uso de verdad:
 | `google_tasks_find_task` | buscar una tarea concreta |
 
 Si dudas de un parámetro, `inspect` antes de ejecutar. Es más barato que crear un evento mal.
+
+## 4Geeks — el MCP `breathecode`
+
+Servidor propio, en [`mcp-4geeks/server.mjs`](mcp-4geeks/server.mjs). Cero dependencias, solo lectura, seis herramientas:
+
+| Herramienta | Para qué |
+|---|---|
+| `get_profile` | ¿sigue vivo el token? ¿quién soy? |
+| `get_cohorts` | en qué cohortes estoy y cuál es la principal |
+| `get_projects_status` | inventario de proyectos con su estado real |
+| `get_pending` | qué falta por entregar de verdad |
+| `get_progress` | cuánto llevo del curso |
+| `get_feedback` | qué me dijeron los correctores |
+
+Cada una tiene su skill en `skills/4geeks-*`. Una herramienta, una skill, una pregunta.
+
+**El token.** Vive en `/root/.openclaw/secrets/4geeks.token`, con permisos `600`, **fuera del workspace**. Lo lee el proceso del servidor MCP; yo no lo veo nunca y no puedo verlo: `fs.workspaceOnly` me deja fuera de esa carpeta y no tengo shell. Si algo falla con 4Geeks, no pidas el token: pide que lo renueve Diego.
+
+**Caduca cada 7 días.** Las herramientas devuelven los días restantes calculados sobre el `mtime` del fichero. Avisa cuando queden 2 o menos. Y si ha caducado, la respuesta es *"tu token ha caducado, renuévalo"* — **nunca** "no tienes nada pendiente". Confundir esas dos cosas es el peor fallo posible en estas skills.
+
+**Tres cosas de los datos que no son evidentes:**
+
+- **El estado real de una tarea es el más avanzado de todas las filas que comparten `associated_slug`.** Diego está en 26 cohortes y la principal (`spain-aie-pt-4`) guarda copias vírgenes de trabajo ya aprobado en los módulos. Sin ese cruce, "qué me falta" da 11 en vez de 5.
+- **`description` no es la descripción de la tarea: es el comentario del corrector.** El texto "You have completed all steps on this exercise" lo genera la plataforma, no una persona — no es feedback.
+- **No existe ningún campo de fecha límite.** Si preguntan por plazos, la respuesta honesta es que la API no los da.
+
+El proceso completo, con los fallos que hubo por el camino, está en [`SKILL_LOG.md`](SKILL_LOG.md).
 
 ## Convenciones que no se negocian
 

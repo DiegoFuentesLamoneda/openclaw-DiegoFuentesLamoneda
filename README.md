@@ -15,8 +15,10 @@ Este repositorio **es** el workspace del agente: lo que ves es lo que Grace lee 
 | [`AGENTS.md`](AGENTS.md) | Reglas inamovibles: privacidad, paradas obligatorias, honestidad |
 | [`USER.md`](USER.md) | Quién es Diego y cómo trabaja |
 | [`TOOLS.md`](TOOLS.md) | Qué hay conectado en esta instalación y con qué convenciones |
-| [`SKILLS_DESIGN.md`](SKILLS_DESIGN.md) | Diseño de las skills, escrito antes de implementarlas |
+| [`SKILLS_DESIGN.md`](SKILLS_DESIGN.md) | Diseño de las skills de Google, escrito antes de implementarlas |
+| [`SKILL_LOG.md`](SKILL_LOG.md) | Cómo aprendió Grace a consultar mi cuenta de 4Geeks, skill a skill |
 | [`skills/`](skills/) | Las skills personalizadas |
+| [`mcp-4geeks/`](mcp-4geeks/) | Servidor MCP propio para la API de estudiante de 4Geeks |
 | [`openclaw-connection/`](openclaw-connection/) | Entrega de la primera práctica: capturas y notas de montaje |
 
 ## Las skills
@@ -29,12 +31,25 @@ Este repositorio **es** el workspace del agente: lo que ves es lo que Grace lee 
 
 Google Tasks es **TasksBoard**, el tablero kanban que Diego ya usaba. Las tareas que crea Grace aparecen ahí directamente.
 
+Y las de 4Geeks, todas sobre el MCP propio [`breathecode`](mcp-4geeks/server.mjs):
+
+| Skill | Qué hace |
+|---|---|
+| [`4geeks-sesion`](skills/4geeks-sesion/SKILL.md) | Comprueba que el token sigue vivo y dice quién eres |
+| [`4geeks-proyectos`](skills/4geeks-proyectos/SKILL.md) | Inventario de proyectos con su estado real |
+| [`4geeks-pendiente`](skills/4geeks-pendiente/SKILL.md) | Qué falta por entregar de verdad, tras cruzar cohortes |
+| [`4geeks-progreso`](skills/4geeks-progreso/SKILL.md) | Cuánto llevas del curso, con la cifra oficial y la real |
+| [`4geeks-feedback`](skills/4geeks-feedback/SKILL.md) | Los comentarios que te dejaron los correctores |
+| [`4geeks-cohortes`](skills/4geeks-cohortes/SKILL.md) | En qué cohorte estás y cuál es la principal |
+
+El detalle de cómo se construyeron está en [`SKILL_LOG.md`](SKILL_LOG.md).
+
 ## Infraestructura
 
 - **Servidor:** VPS Ubuntu 22.04, gateway de OpenClaw como servicio de systemd con `linger` activado — sobrevive a cierres de sesión y reinicios.
 - **Modelo:** `deepseek-v4-flash` a través del gateway LiteLLM de 4Geeks.
 - **Canal:** Telegram, con emparejamiento por `dmPolicy: "pairing"`.
-- **Herramientas:** un único servidor MCP nativo (Zapier) que da Google Docs, Calendar, Gmail y Tasks.
+- **Herramientas:** dos servidores MCP nativos. **Zapier**, que da Google Docs, Calendar, Gmail y Tasks; y **`breathecode`**, escrito para este workspace, que da la API de estudiante de 4Geeks.
 
 ### Nota sobre el modelo
 
