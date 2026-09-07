@@ -179,7 +179,7 @@ const TOOLS = [
   {
     name: "get_progress",
     description:
-      "Resumen general del curso: total de proyectos y ejercicios, cuántos aprobados, rechazados, pendientes de entrega y esperando corrección.",
+      "Resumen general del curso con dos perspectivas: (1) asignado hasta hoy — solo lo que tiene ficha de tarea en la API; (2) bootcamp completo — proyectos requeridos totales contando módulos sin empezar. No confunde token caducado con progreso.",
     inputSchema: { type: "object", properties: {}, required: [], additionalProperties: false },
   },
   {
@@ -336,6 +336,38 @@ async function handleGetPending(args) {
   const pending = exercises.filter((t) => t.task_status === "PENDING").length;
   lines.push(`\ud83d\udcdd Ejercicios: ${exercises.length} (${done} hechos, ${pending} pendientes)`);
 
+  // ── Footnote: proyectos en módulos sin empezar ────────────────────────
+  const admissions = await apiGet("/v1/admissions/user/me");
+  if (!admissions._error) {
+    const enrollments = Array.isArray(admissions.cohorts) ? admissions.cohorts : [];
+    const cohorts = enrollments.map((e) => e.cohort).filter(Boolean);
+    const sorted = [...cohorts].sort(
+      (a, b) => (b.micro_cohorts?.length || 0) - (a.micro_cohorts?.length || 0)
+    );
+    const mainSlug = sorted.length > 0 ? sorted[0].slug : null;
+    const allTaskSlugs = new Set(deduped.map((t) => t.associated_slug));
+    let lockedCount = 0;
+    const seenLocked = new Set();
+
+    for (const enrollment of enrollments) {
+      if (enrollment.cohort?.slug === mainSlug) continue;
+      if (!enrollment.completion) continue;
+      const pendingSlugs = enrollment.completion.pending_required_slugs?.PROJECT || [];
+      if (Array.isArray(pendingSlugs)) {
+        for (const slug of pendingSlugs) {
+          if (!allTaskSlugs.has(slug) && !seenLocked.has(slug)) {
+            seenLocked.add(slug);
+            lockedCount++;
+          }
+        }
+      }
+    }
+
+    if (lockedCount > 0) {
+      lines.push(`\n\ud83d\udd12 Adem\u00e1s hay ${lockedCount} proyectos en m\u00f3dulos que a\u00fan no has empezado (sin ficha de tarea a\u00fan).`);
+    }
+  }
+
   return lines.join("\n");
 }
 
@@ -364,14 +396,18 @@ async function handleGetProgress(args) {
   const projPct = projects.length > 0 ? Math.round((projApproved / projects.length) * 100) : 0;
   const exPct = exercises.length > 0 ? Math.round((exApproved / exercises.length) * 100) : 0;
 
-  // Fetch 4Geeks official completion stats from the main cohort
+  // ── Admissions data (uses once for bootcamp stats + main cohort stats) ──
   const admissions = await apiGet("/v1/admissions/user/me");
-  let apiOverall = null;
-  let apiMissing = [];
-  let apiTotal = 0;
-  let apiCompleted = 0;
-  let apiPct = 0;
-  let gapNote = "";
+  let bootcampTotal = 0;
+  let bootcampCompleted = 0;
+  let lockedSlugs = [];
+
+  // Main cohort data
+  let mainTotal = 0;
+  let mainCompleted = 0;
+  let mainPercent = 0;
+  let mainMissing = [];
+  let mainGapNote = "";
 
   if (!admissions._error) {
     const enrollments = Array.isArray(admissions.cohorts) ? admissions.cohorts : [];
@@ -379,62 +415,107 @@ async function handleGetProgress(args) {
     const sorted = [...cohorts].sort(
       (a, b) => (b.micro_cohorts?.length || 0) - (a.micro_cohorts?.length || 0)
     );
-    const mainEnrollment = sorted.length > 0
-      ? enrollments.find((e) => e.cohort?.slug === sorted[0].slug)
-      : null;
+    const mainSlug = sorted.length > 0 ? sorted[0].slug : null;
 
-    if (mainEnrollment && mainEnrollment.completion) {
-      const c = mainEnrollment.completion;
-      apiOverall = c.overall;
-      if (apiOverall) {
-        apiTotal = apiOverall.total || 0;
-        apiCompleted = apiOverall.completed || 0;
-        apiPct = apiOverall.percent || 0;
-      }
-      if (c.required && c.required.PROJECT && Array.isArray(c.required.PROJECT.missing)) {
-        apiMissing = c.required.PROJECT.missing;
-      }
+    const allTaskSlugs = new Set(deduped.map((t) => t.associated_slug));
+    const seenLocked = new Set();
 
-      // Build gap explanation: which of 4Geeks' missing slugs are actually approved by slug-crossing
-      const approvedSlugs = new Set(
-        deduped.filter((t) => t.revision_status === "APPROVED").map((t) => t.associated_slug)
-      );
-      const actuallyMissing = apiMissing.filter((slug) => !approvedSlugs.has(slug));
-      const falseMissing = apiMissing.filter((slug) => approvedSlugs.has(slug));
+    for (const enrollment of enrollments) {
+      if (!enrollment.completion) continue;
 
-      if (falseMissing.length > 0) {
-        const slugList = falseMissing.map((s) => `\`${s}\``).join(", ");
-        gapNote = `\n\nDe los ${apiMissing.length} que 4Geeks cuenta como pendientes, ${falseMissing.length} estan aprobados en sus modulos. ${actuallyMissing.length > 0 ? `El unico pendiente de verdad es ${actuallyMissing[0]}.` : "En realidad no hay ninguno."}`;
-      } else if (apiMissing.length > 0) {
-        gapNote = `\n\nTodos los ${apiMissing.length} que 4Geeks cuenta como pendientes coinciden con los que tienes sin entregar.`;
+      const c = enrollment.completion;
+
+      if (enrollment.cohort?.slug === mainSlug) {
+        // Main cohort: 4Geeks official view
+        if (c.overall) {
+          mainTotal = c.overall.total || 0;
+          mainCompleted = c.overall.completed || 0;
+          mainPercent = c.overall.percent || 0;
+        }
+        if (c.required && c.required.PROJECT && Array.isArray(c.required.PROJECT.missing)) {
+          mainMissing = c.required.PROJECT.missing;
+        }
+
+        // Reconciliation: de los que la plataforma da como pendientes,
+        // quita los que tengan revision_status === "APPROVED" en cualquier cohorte.
+        const approvedSlugsSet = new Set(
+          deduped.filter((t) => t.revision_status === "APPROVED").map((t) => t.associated_slug)
+        );
+        const trulyMissing = mainMissing.filter((slug) => !approvedSlugsSet.has(slug));
+        const approvedFromMain = mainMissing.length - trulyMissing.length;
+
+        if (approvedFromMain > 0) {
+          let suffix;
+          if (trulyMissing.length === 0) {
+            suffix = "En realidad no hay ninguno.";
+          } else if (trulyMissing.length === 1) {
+            suffix = `El \u00fanico pendiente de verdad es \`${trulyMissing[0]}\`.`;
+          } else {
+            const list = trulyMissing.map((s) => `\`${s}\``).join(", ");
+            suffix = `Los pendientes reales son: ${list}.`;
+          }
+          mainGapNote = `\n   De los ${mainMissing.length} que 4Geeks cuenta como pendientes, ${approvedFromMain} est\u00e1n aprobados en sus m\u00f3dulos. ${suffix}`;
+        }
+      } else {
+        // Non-main cohorts: bootcamp-wide stats
+        if (c.overall) {
+          bootcampTotal += c.overall.total || 0;
+          bootcampCompleted += c.overall.completed || 0;
+        }
+
+        const pendingSlugs = c.pending_required_slugs?.PROJECT || c.required?.PROJECT?.missing || [];
+        if (Array.isArray(pendingSlugs)) {
+          for (const slug of pendingSlugs) {
+            if (!allTaskSlugs.has(slug) && !seenLocked.has(slug)) {
+              seenLocked.add(slug);
+              lockedSlugs.push(slug);
+            }
+          }
+        }
       }
     }
   }
 
+  const bootcampPct = bootcampTotal > 0 ? Math.round((bootcampCompleted / bootcampTotal) * 100) : 0;
+
+  // ── Build output ─────────────────────────────────────────────────────
   const lines = [
     tokenLine(),
     `\ud83d\udcca ${deduped.length} unicos (${raw.received} filas de ${raw.expected})`,
     `   ${sum === deduped.length ? "\u2705 Los cubos cuadran" : `\u26a0\ufe0f Los cubos suman ${sum}, faltan ${deduped.length - sum}`}`,
     "",
-    `\ud83d\udcd0 Proyectos: ${projects.length} (${projApproved} aprobados = ${projPct}%)`,
+    // 1. Asignado hasta hoy (task-based — solo lo que tiene ficha en la API)
+    `\ud83d\udcd0 Asignado hasta hoy: ${projects.length} proyectos, ${projApproved} aprobados (${projPct}%)`,
     `\ud83d\udcdd Ejercicios: ${exercises.length} (${exApproved} aprobados = ${exPct}%)`,
     "",
-    `\u2705 Aprobados: ${approved}`,
-    `\u274c Rechazados: ${rejected}`,
-    `\u23f3 Sin entregar: ${notDone}`,
-    `\ud83d\udcec Esperando revision: ${waitingReview}`,
-    `\ud83e\udd13 Hechos sin revision formal: ${autoDone}`,
   ];
-  if (ignored > 0) lines.push(`\u2b1c Ignorados: ${ignored}`);
 
-  if (apiOverall) {
-    lines.push("");
-    lines.push(`**4Geeks oficial (cohorte principal):** ${apiCompleted}/${apiTotal} = ${apiPct}%`);
-    if (apiMissing.length > 0) {
-      lines.push(`   ${apiMissing.length} pendientes segun plataforma: ${apiMissing.join(", ")}`);
+  // 2. Bootcamp completo (de todas las matr\u00edculas excepto la principal)
+  if (bootcampTotal > 0) {
+    lines.push(`\ud83c\udf93 Bootcamp completo: ${bootcampTotal} proyectos requeridos, ${bootcampCompleted} aprobados (${bootcampPct}%)`);
+    if (lockedSlugs.length > 0) {
+      lines.push(`\ud83d\udd12 ${lockedSlugs.length} proyectos en m\u00f3dulos sin empezar (a\u00fan sin ficha de tarea)`);
     }
+    lines.push("");
   }
-  if (gapNote) lines.push(gapNote);
+
+  // 3. Lo que dice 4Geeks de la cohorte principal
+  if (mainTotal > 0) {
+    lines.push(`\ud83c\udfeb 4Geeks oficial (cohorte principal): ${mainCompleted}/${mainTotal} = ${mainPercent}%`);
+    if (mainMissing.length > 0) {
+      lines.push(`   ${mainMissing.length} pendientes seg\u00fan plataforma: ${mainMissing.join(", ")}`);
+    }
+    if (mainGapNote) lines.push(mainGapNote);
+    lines.push("");
+  }
+
+  // Buckets
+  lines.push(`\u2705 Aprobados: ${approved}`);
+  lines.push(`\u274c Rechazados: ${rejected}`);
+  lines.push(`\u23f3 Sin entregar: ${notDone}`);
+  lines.push(`\ud83d\udcec Esperando revisi\u00f3n: ${waitingReview}`);
+  lines.push(`\ud83e\udd13 Hechos sin revisi\u00f3n formal: ${autoDone}`);
+  if (ignored > 0) lines.push(`\u2b1c Ignorados: ${ignored}`);
 
   return lines.join("\n");
 }
@@ -570,7 +651,7 @@ rl.on("line", async (line) => {
       const resultText = await handler(params.arguments);
       send(id, {
         content: [{ type: "text", text: String(resultText) }],
-        isError: !!resultText._error || false,
+        isError: false,
       });
     } catch (e) {
       send(id, {

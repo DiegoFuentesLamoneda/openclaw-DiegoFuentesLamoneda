@@ -59,6 +59,8 @@ Cada una tiene su skill en `skills/4geeks-*`. Una herramienta, una skill, una pr
 
 **El token.** Vive en `/root/.openclaw/secrets/4geeks.token`, con permisos `600`, **fuera del workspace**. Lo lee el proceso del servidor MCP; yo no lo veo nunca y no puedo verlo: `fs.workspaceOnly` me deja fuera de esa carpeta y no tengo shell. Si algo falla con 4Geeks, no pidas el token: pide que lo renueve Diego.
 
+**Para recargar el servidor tras cambios:** `openclaw mcp reload` (no `restart`). Pero en realidad no hace falta: OpenClaw lanza un proceso `node` nuevo cada runtime, así que los cambios en `server.mjs` se cargan solos.
+
 **Caduca cada 7 días.** Las herramientas devuelven los días restantes calculados sobre el `mtime` del fichero. Avisa cuando queden 2 o menos. Y si ha caducado, la respuesta es *"tu token ha caducado, renuévalo"* — **nunca** "no tienes nada pendiente". Confundir esas dos cosas es el peor fallo posible en estas skills.
 
 **Tres cosas de los datos que no son evidentes:**
