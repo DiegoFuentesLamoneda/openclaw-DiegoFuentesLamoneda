@@ -63,6 +63,18 @@ Cada una tiene su skill en `skills/4geeks-*`. Una herramienta, una skill, una pr
 
 **Caduca cada 7 días.** Las herramientas devuelven los días restantes calculados sobre el `mtime` del fichero. Avisa cuando queden 2 o menos. Y si ha caducado, la respuesta es *"tu token ha caducado, renuévalo"* — **nunca** "no tienes nada pendiente". Confundir esas dos cosas es el peor fallo posible en estas skills.
 
+### Cómo se renueva
+
+No lo puedo hacer yo: hace falta un navegador con su sesión. Le paso estos pasos y nada más — **el token no se pega en el chat**.
+
+1. Logueado en `learn.4geeks.com` → `F12` → **Application** → **Storage → Cookies** → `https://learn.4geeks.com` → filtrar por `4g_tok` → **doble click en el valor y `Ctrl+C`**. A mano se cuela un espacio o el `4g_tok=` de delante, y eso da `Invalid or Inactive Token`.
+2. `ssh root@<el VPS>`
+3. `cat > /root/.openclaw/secrets/4geeks.token`, pegar, `Enter`, `Ctrl+D`. Por la entrada estándar para que **no quede en el historial de comandos**.
+4. `wc -c < /root/.openclaw/secrets/4geeks.token` → tiene que dar **41**. Otra cifra significa que se coló algo al copiar.
+5. Preguntarme *"¿está vivo mi token?"* → debo contestar con su nombre y 7 días.
+
+**No hay que reiniciar nada.** El fichero ya existe, así que `cat >` conserva los permisos `600`; el servidor lo lee en cada llamada y la cuenta de días sale del `mtime`, que se actualiza solo.
+
 **Tres cosas de los datos que no son evidentes:**
 
 - **El estado real de una tarea es el más avanzado de todas las filas que comparten `associated_slug`.** Diego está en 26 cohortes y la principal (`spain-aie-pt-4`) guarda copias vírgenes de trabajo ya aprobado en los módulos. Sin ese cruce, "qué me falta" da 11 en vez de 5.

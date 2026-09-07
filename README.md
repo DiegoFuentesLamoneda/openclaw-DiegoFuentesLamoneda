@@ -55,6 +55,16 @@ El detalle de cómo se construyeron está en [`SKILL_LOG.md`](SKILL_LOG.md).
 
 El montaje inicial usó `google/gemini-flash-latest` porque el gateway de 4Geeks daba errores de límite. Esa vía se agotó: el free tier de Gemini devolvía `429 RESOURCE_EXHAUSTED` porque OpenClaw manda un prompt de sistema grande en cada mensaje y los esquemas MCP lo engordan todavía más. Se migró a `deepseek-v4-flash` por LiteLLM, que es lo que corre hoy.
 
+**No se puede subir a un modelo mayor.** En septiembre de 2026 se intentó pasar a `claude-opus-4-6`, que aparece declarado en `models.providers.litellm.models` con coste 0 y un millón de contexto. El gateway lo rechazó:
+
+```
+403 team not allowed to access model.
+This team can only access models=['madrid-spain/openrouter/deepseek/deepseek-v4-flash',
+'madrid-spain/openrouter/xiaomi/mimo-v2.5', ...]
+```
+
+Estar declarado en la config **no es tenerlo concedido**. Se revirtió y quedó `deepseek-v4-flash` de principal con `mimo-v2.5` de reserva, que son los dos que el equipo sí tiene permitidos. Y de ahí sale una restricción de diseño que atraviesa todo lo de 4Geeks: **el contexto va justo, así que las herramientas MCP devuelven texto filtrado y resumido, nunca JSON en crudo.**
+
 ## Seguridad
 
 Decisiones tomadas tras pasar `openclaw security audit`, documentadas en [`openclaw-connection/notes.md`](openclaw-connection/notes.md):
