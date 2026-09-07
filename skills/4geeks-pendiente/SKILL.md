@@ -10,7 +10,7 @@ Diego pregunta *"¿qué me falta?"*, *"¿qué tengo que entregar?"*, *"¿voy ret
 
 ## Herramienta
 
-Una sola llamada a **`get_pending`** del MCP `breathecode`. No necesita parámetros — por defecto trae proyectos y ejercicios, la skill ya separa uno de otro.
+Una sola llamada a **`breathecode__get_pending`** del MCP `breathecode`. No necesita parámetros — por defecto trae proyectos y ejercicios, la skill ya separa uno de otro.
 
 ## Cómo lo cuentas
 

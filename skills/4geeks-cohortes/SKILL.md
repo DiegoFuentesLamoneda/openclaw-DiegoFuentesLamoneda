@@ -10,7 +10,7 @@ Diego pregunta *"¿en qué cohorte estoy?"*, *"¿qué grupo tengo?"* o *"¿cuán
 
 ## Herramienta
 
-Una sola llamada a **`get_cohorts`** del MCP `breathecode`. No necesita parámetros.
+Una sola llamada a **`breathecode__get_cohorts`** del MCP `breathecode`. No necesita parámetros.
 
 ## Cómo lo cuentas
 

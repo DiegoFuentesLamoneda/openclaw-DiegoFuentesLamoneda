@@ -10,7 +10,7 @@ Diego pregunta *"¿cómo voy con los proyectos?"*, *"¿qué proyectos tengo?"*, 
 
 ## Herramienta
 
-Una sola llamada a **`get_projects_status`** del MCP `breathecode`. Acepta un parámetro `task_type` opcional (por defecto `PROJECT`). Si quiere ver también ejercicios, pasa `task_type: "PROJECT,EXERCISE"`.
+Una sola llamada a **`breathecode__get_projects_status`** del MCP `breathecode`. Acepta un parámetro `task_type` opcional (por defecto `PROJECT`). Si quiere ver también ejercicios, pasa `task_type: "PROJECT,EXERCISE"`.
 
 ## Cómo lo cuentas
 

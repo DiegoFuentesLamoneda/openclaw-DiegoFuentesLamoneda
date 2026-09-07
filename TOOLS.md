@@ -48,12 +48,12 @@ Servidor propio, en [`mcp-4geeks/server.mjs`](mcp-4geeks/server.mjs). Cero depen
 
 | Herramienta | Para qué |
 |---|---|
-| `get_profile` | ¿sigue vivo el token? ¿quién soy? |
-| `get_cohorts` | en qué cohortes estoy y cuál es la principal |
-| `get_projects_status` | inventario de proyectos con su estado real |
-| `get_pending` | qué falta por entregar de verdad |
-| `get_progress` | cuánto llevo del curso |
-| `get_feedback` | qué me dijeron los correctores |
+| `breathecode__get_profile` | ¿sigue vivo el token? ¿quién soy? |
+| `breathecode__get_cohorts` | en qué cohortes estoy y cuál es la principal |
+| `breathecode__get_projects_status` | inventario de proyectos con su estado real |
+| `breathecode__get_pending` | qué falta por entregar de verdad |
+| `breathecode__get_progress` | cuánto llevo del curso |
+| `breathecode__get_feedback` | qué me dijeron los correctores |
 
 Cada una tiene su skill en `skills/4geeks-*`. Una herramienta, una skill, una pregunta.
 

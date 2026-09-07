@@ -10,7 +10,7 @@ Diego pregunta *"¿está mi token vivo?"*, *"sigo conectado a 4Geeks?"*, *"¿qui
 
 ## Herramienta
 
-Una sola llamada a **`get_profile`** del MCP `breathecode`. No necesita parámetros.
+Una sola llamada a **`breathecode__get_profile`** del MCP `breathecode`. No necesita parámetros.
 
 ## Cómo lo cuentas
 

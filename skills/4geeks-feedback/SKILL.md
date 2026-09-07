@@ -10,7 +10,7 @@ Diego pregunta *"¿qué me dijeron los correctores?"*, *"¿hay feedback de mis e
 
 ## Herramienta
 
-Una sola llamada a **`get_feedback`** del MCP `breathecode`. Acepta un parámetro `task_type` opcional (por defecto `PROJECT,EXERCISE`).
+Una sola llamada a **`breathecode__get_feedback`** del MCP `breathecode`. Acepta un parámetro `task_type` opcional (por defecto `PROJECT,EXERCISE`).
 
 ## Cómo lo cuentas
 

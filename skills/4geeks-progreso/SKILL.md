@@ -10,7 +10,7 @@ Diego pregunta *"¿cómo voy de porcentaje?"*, *"¿cuánto llevo del curso?"*, *
 
 ## Herramienta
 
-Una sola llamada a **`get_progress`** del MCP `breathecode`. No necesita parámetros.
+Una sola llamada a **`breathecode__get_progress`** del MCP `breathecode`. No necesita parámetros.
 
 ## Cómo lo cuentas
 
