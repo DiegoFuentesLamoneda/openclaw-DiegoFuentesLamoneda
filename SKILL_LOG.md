@@ -149,7 +149,7 @@ Las seis salieron de la misma conversación con Grace, la que arranca en la secc
 
 **Qué hace y qué endpoint usa**
 
-Herramienta `get_profile` → `GET /v1/auth/user/me`. Una sola llamada. Confirma que la sesión está activa, devuelve identidad y calcula los días que le quedan al token a partir del `mtime` del fichero.
+Herramienta `breathecode__get_profile` → `GET /v1/auth/user/me`. Una sola llamada. Confirma que la sesión está activa, devuelve identidad y calcula los días que le quedan al token a partir del `mtime` del fichero.
 
 Si el token ha caducado, la respuesta es *"tu token ha caducado, renuévalo"* — nunca un error técnico ni un silencio.
 
@@ -173,7 +173,7 @@ Si el token ha caducado, la respuesta es *"tu token ha caducado, renuévalo"* �
 
 **Qué hace y qué endpoint usa**
 
-Herramienta `get_projects_status` → `GET /v1/assignment/user/me/task` (paginado). Cruza por `associated_slug` y devuelve un elemento único por trabajo, ordenado del estado más avanzado al menos. Por defecto solo `PROJECT`; los ejercicios hay que pedirlos con el parámetro `task_type`.
+Herramienta `breathecode__get_projects_status` → `GET /v1/assignment/user/me/task` (paginado). Cruza por `associated_slug` y devuelve un elemento único por trabajo, ordenado del estado más avanzado al menos. Por defecto solo `PROJECT`; los ejercicios hay que pedirlos con el parámetro `task_type`.
 
 **Prueba**
 
@@ -199,7 +199,7 @@ Herramienta `get_projects_status` → `GET /v1/assignment/user/me/task` (paginad
 
 **Qué hace y qué endpoint usa**
 
-Herramienta `get_pending` → `GET /v1/assignment/user/me/task` (paginado). Cruza por slug, separa lo que exige trabajo mío de lo que ya entregué y espera corrección, y resume los ejercicios en una sola línea. "Esperando corrección" exige `delivered_at` no nulo: si no hay entrega real, no hay nada que esperar.
+Herramienta `breathecode__get_pending` → `GET /v1/assignment/user/me/task` (paginado). Cruza por slug, separa lo que exige trabajo mío de lo que ya entregué y espera corrección, y resume los ejercicios en una sola línea. "Esperando corrección" exige `delivered_at` no nulo: si no hay entrega real, no hay nada que esperar.
 
 **Prueba**
 
@@ -235,14 +235,23 @@ El primero de la lista es esta misma práctica.
 
 **Qué hace y qué endpoints usa**
 
-Herramienta `get_progress` → dos llamadas:
+Herramienta `breathecode__get_progress` → dos llamadas:
 
 - `GET /v1/assignment/user/me/task` (paginado) para el cálculo cruzado por slug.
 - `GET /v1/admissions/user/me` para leer el `completion` oficial de la cohorte principal.
 
 Los cubos son exhaustivos y la herramienta verifica que sumen el total; si no cuadran, lo avisa en vez de callárselo.
 
-Da **las dos cifras**: la oficial de 4Geeks y la real tras el cruce. Porque 4Geeks **no cruza por slug** y cuenta como pendientes seis proyectos ya aprobados en sus módulos — una discrepancia que se ve en `learn.4geeks.com` y que la skill explica en vez de ignorar.
+Da **cuatro perspectivas**, porque hay cuatro verdades distintas y mezclarlas engaña:
+
+- **Asignado hasta hoy** — de lo que me han puesto delante, cuánto llevo aprobado. Mide el ritmo.
+- **Bootcamp completo** — sobre el total que exige el plan de estudios. Mide dónde estoy en el curso.
+- **Módulos sin empezar** — proyectos que existen en el plan pero aún no tienen ficha de tarea.
+- **Lo que dice 4Geeks** de la cohorte principal, con la frase que reconcilia la diferencia.
+
+Las dos primeras hacen falta porque **el endpoint de tareas solo ve lo asignado**: 25 proyectos con ficha creada frente a los 77 que exige el bootcamp. Sin esa distinción, el porcentaje **bajaría cada vez que empiezo un módulo nuevo**, porque el denominador crece de golpe — un número que empeora cuando avanzas está mal construido. El total real sale de sumar el `completion.overall` de todas las matrículas menos la principal, cuyos siete proyectos son los duplicados de siempre.
+
+Y la cuarta hace falta porque **4Geeks no cruza por slug**: cuenta como pendientes seis proyectos ya aprobados en sus módulos. Esa discrepancia se ve en `learn.4geeks.com`, y la skill la explica en vez de dejar que parezca un error nuestro.
 
 **Prueba**
 
@@ -251,22 +260,28 @@ Da **las dos cifras**: la oficial de 4Geeks y la real tras el cruce. Porque 4Gee
 📊 121 unicos (157 filas de 157)
    ✅ Los cubos cuadran
 
-📐 Proyectos: 25 (16 aprobados = 64%)
+📐 Asignado hasta hoy: 25 proyectos, 16 aprobados (64%)
 📝 Ejercicios: 96 (27 aprobados = 28%)
+
+🎓 Bootcamp completo: 77 proyectos requeridos, 16 aprobados (21%)
+🔒 47 proyectos en módulos sin empezar (aún sin ficha de tarea)
+
+🏫 4Geeks oficial (cohorte principal): 0/7 = 0%
+   7 pendientes según plataforma: ai-eng-milestone-web-fundamentals, exercise-terminal-challenge,
+   first-collaborative-project-tailwind-css, html-css-artist-landing-seo-access,
+   simple-dashboard-tailwind-css, todo-list-cli-python, typescript-cinema-seat-manager
+
+   De los 7 que 4Geeks cuenta como pendientes, 6 están aprobados en sus módulos.
+   El único pendiente de verdad es `todo-list-cli-python`.
 
 ✅ Aprobados: 43
 ❌ Rechazados: 0
 ⏳ Sin entregar: 67
-📬 Esperando revision: 4
-🤓 Hechos sin revision formal: 7
-
-**4Geeks oficial (cohorte principal):** 0/7 = 0%
-
-De los 7 que 4Geeks cuenta como pendientes, 6 estan aprobados en sus modulos.
-El unico pendiente de verdad es todo-list-cli-python.
+📬 Esperando revisión: 4
+🤓 Hechos sin revisión formal: 7
 ```
 
-Esa última línea es la frase más útil que produce todo el sistema.
+Esa última frase es la más útil que produce todo el sistema, y **se calcula**: de los slugs que la plataforma da por pendientes, se quitan los que tengan una fila `APPROVED` en cualquier cohorte, y lo que queda se nombra. No es una plantilla — en un intento anterior lo fue, y decía "en realidad no hay ninguno" cuando quedaba uno.
 
 ---
 
@@ -282,7 +297,7 @@ Los comentarios de los correctores se pierden. Están dentro de cada entrega en 
 
 **Qué hace y qué endpoint usa**
 
-Herramienta `get_feedback` → `GET /v1/assignment/user/me/task` (paginado). El comentario del corrector está en el campo `description`. Descarta el texto automático de la plataforma (*"You have completed all steps on this exercise"*), que no lo escribe una persona, y cita el comentario entero sin resumirlo.
+Herramienta `breathecode__get_feedback` → `GET /v1/assignment/user/me/task` (paginado). El comentario del corrector está en el campo `description`. Descarta el texto automático de la plataforma (*"You have completed all steps on this exercise"*), que no lo escribe una persona, y cita el comentario entero sin resumirlo.
 
 **Prueba**
 
@@ -316,7 +331,7 @@ Porque "¿en qué cohorte estoy?" tiene una respuesta sorprendentemente enrevesa
 
 **Qué hace y qué endpoint usa**
 
-Herramienta `get_cohorts` → `GET /v1/admissions/user/me`. El array `cohorts` **no contiene cohortes: contiene matrículas**, con la cohorte anidada en `cohort`.
+Herramienta `breathecode__get_cohorts` → `GET /v1/admissions/user/me`. El array `cohorts` **no contiene cohortes: contiene matrículas**, con la cohorte anidada en `cohort`.
 
 Ninguna de las 26 se distingue por `stage` (todas `INACTIVE`) ni por `educational_status` (todas `ACTIVE`). La principal se detecta por **`cohort.micro_cohorts`**: `spain-aie-pt-4` tiene 23; las demás, cero. A la pregunta normal se contesta con una línea; las 26 solo si se piden.
 
@@ -358,6 +373,10 @@ Nada de esto salió bien a la primera, y el registro de los fallos vale tanto co
 
 Y la convención ya estaba escrita: [`TOOLS.md`](TOOLS.md) documenta las de Zapier como `zapier__discover_zapier_actions`, con su prefijo. Se rompió al añadir las nuevas.
 
+**Dos regresiones al reescribir una función.** Al añadir las cifras del bootcamp completo, la reescritura de `handleGetProgress` se llevó por delante la cifra oficial de 4Geeks y su frase de reconciliación, pedidas expresamente dos mensajes antes. Y cuando volvieron, la frase estaba mal calculada: decía *"en realidad no hay ninguno"* cuando quedaba uno, **contradiciendo a `breathecode__get_pending`**, que sí listaba `todo-list-cli-python`. Dos herramientas del mismo servidor afirmando cosas incompatibles sobre el mismo proyecto. Se arregló haciendo que la frase se calcule contra los slugs `APPROVED` en vez de rellenar una plantilla.
+
+La lección práctica: **cada vez que el agente reescribe una función, hay que volver a probar lo que ya funcionaba**, no solo lo nuevo.
+
 Y una corrección **mía**, que también cuenta: le dije que la API no podía saber cuál era mi cohorte principal y que había que escribírselo. Sí puede — `micro_cohorts` lo dice. Mandó el dato.
 
 ---
@@ -389,5 +408,6 @@ openclaw mcp probe breathecode    → breathecode: 6 tools
 
 - **El token caduca cada 7 días** y hay que renovarlo a mano. Grace avisa cuando quedan 2 días o menos, pero no puede renovarlo: no tiene credenciales de 4Geeks ni shell.
 - **No hay fechas límite** en la API. Ninguna skill puede decir para cuándo es una entrega.
+- **Las skills solo ven trabajo asignado.** Los módulos sin empezar no tienen ficha de tarea: 25 proyectos con ficha frente a 77 que exige el plan. Por eso `4geeks-progreso` da la cifra del bootcamp completo aparte, y `4geeks-pendiente` menciona los 47 que esperan al final.
 - **La cifra oficial de 4Geeks y la real no coinciden**, y no es un error de este sistema: la plataforma no cruza por slug. Por eso `4geeks-progreso` da las dos.
 - **Solo lectura.** Entregar un proyecto se sigue haciendo en la plataforma.

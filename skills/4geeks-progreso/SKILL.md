@@ -1,6 +1,6 @@
 ---
 name: 4geeks-progreso
-description: Resumen general del curso con dos perspectivas: asignado hasta hoy vs bootcamp completo contando módulos sin empezar.
+description: Resumen general del curso con cuatro perspectivas: asignado hasta hoy, bootcamp completo, módulos sin empezar y la cifra oficial de 4Geeks.
 metadata: { "openclaw": { "emoji": "📊" } }
 ---
 
@@ -24,13 +24,16 @@ La cifra de "asignado hasta hoy" baja cuando empieza un módulo nuevo porque el 
 
 ## Cómo lo cuentas
 
-La herramienta devuelve las tres líneas directamente. Las presentas:
+La herramienta devuelve cuatro líneas. **Las cuatro se enseñan**, no elijas por tu cuenta:
 
 - 📐 Asignado hasta hoy: X proyectos, Y aprobados (Z%)
 - 🎓 Bootcamp completo: X proyectos requeridos, Y aprobados (Z%)
 - 🔒 X proyectos en módulos sin empezar (aún sin ficha de tarea)
+- 🏫 4Geeks oficial (cohorte principal): X/Y, con la frase que explica la diferencia
 
 Luego sigue el desglose de cubos: aprobados, rechazados, sin entregar, esperando revisión, hechos sin revisión formal.
+
+**La cuarta no se omite nunca.** Es la que explica por qué lo que Diego ve en `learn.4geeks.com` no cuadra con lo que le dices tú: la plataforma no cruza por slug y cuenta como pendientes proyectos ya aprobados en los módulos. Sin esa línea, la discrepancia parece un error nuestro.
 
 El estado del token **no se menciona** a menos que queden 2 días o menos, o haya caducado.
 
