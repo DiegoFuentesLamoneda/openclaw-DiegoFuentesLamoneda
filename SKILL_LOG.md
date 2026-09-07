@@ -354,6 +354,10 @@ Nada de esto salió bien a la primera, y el registro de los fallos vale tanto co
 
 **Intentó usar la shell.** Al terminar el servidor quiso comprobarlo con `wc` y chocó con `tools.exec.mode: "deny"`. Está escrito en su propio [`TOOLS.md`](TOOLS.md); se le olvidó a media tarea.
 
+**Los nombres de las herramientas, sin el prefijo del servidor.** Este es el más instructivo de todos. Las seis skills decían *"llama a `get_feedback`"*, pero OpenClaw las expone como **`breathecode__get_feedback`**. Grace buscaba un nombre que no existía, no lo encontraba, y de ahí concluía que **el servidor MCP se había caído**: rebuscó entre las herramientas de Zapier y luego pidió que se ejecutara `openclaw mcp probe` para confirmar la avería. Razonamiento impecable a partir de un dato falso — la forma más difícil de detectar un error, porque todo lo que dice el agente suena sensato.
+
+Y la convención ya estaba escrita: [`TOOLS.md`](TOOLS.md) documenta las de Zapier como `zapier__discover_zapier_actions`, con su prefijo. Se rompió al añadir las nuevas.
+
 Y una corrección **mía**, que también cuenta: le dije que la API no podía saber cuál era mi cohorte principal y que había que escribírselo. Sí puede — `micro_cohorts` lo dice. Mandó el dato.
 
 ---
