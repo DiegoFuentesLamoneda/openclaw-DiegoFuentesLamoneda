@@ -229,17 +229,28 @@ async function handleGetCohorts(args) {
   const data = await apiGet("/v1/admissions/user/me");
   if (data._error) return formatApiError(data);
 
-  const cohorts = Array.isArray(data.cohorts) ? data.cohorts : [];
-  if (cohorts.length === 0) {
+  const enrollments = Array.isArray(data.cohorts) ? data.cohorts : [];
+  if (enrollments.length === 0) {
     return `${tokenLine()}\n\nNo estas asignado a ninguna cohorte.`;
   }
 
+  // Each enrollment wraps a cohort: { cohort: { id, slug, name, micro_cohorts, ... }, ... }
+  const cohorts = enrollments.map((e) => e.cohort).filter(Boolean);
+
+  // Main cohort = the one with the most micro_cohorts (spain-aie-pt-4 has 23, others 0-3)
+  const sorted = [...cohorts].sort(
+    (a, b) => (b.micro_cohorts?.length || 0) - (a.micro_cohorts?.length || 0)
+  );
+  const main = sorted[0];
+
   const lines = [tokenLine(), ""];
-  for (const c of cohorts) {
-    const stage = c.stage || "desconocida";
-    const start = c.kickoff_date ? c.kickoff_date.slice(0, 10) : "\u2014";
-    const end = c.ending_date ? c.ending_date.slice(0, 10) : "\u2014";
-    lines.push(`\u2022 **${c.name}** (${c.slug}) \u2014 etapa: _${stage}_ \u2014 ${start} \u2192 ${end}`);
+  const mainStart = main.kickoff_date ? main.kickoff_date.slice(0, 10) : "\u2014";
+  const mainEnd = main.ending_date ? main.ending_date.slice(0, 10) : "\u2014";
+  lines.push(`\ud83c\udfeb **${main.name}** (${main.slug}) \u2014 ${mainStart} \u2192 ${mainEnd}`);
+
+  const rest = sorted.slice(1);
+  if (rest.length > 0) {
+    lines.push(`\n... y ${rest.length} cohortes mas (modulos y prework). Pide "todas" para verlas.`);
   }
 
   return lines.join("\n");
@@ -353,6 +364,53 @@ async function handleGetProgress(args) {
   const projPct = projects.length > 0 ? Math.round((projApproved / projects.length) * 100) : 0;
   const exPct = exercises.length > 0 ? Math.round((exApproved / exercises.length) * 100) : 0;
 
+  // Fetch 4Geeks official completion stats from the main cohort
+  const admissions = await apiGet("/v1/admissions/user/me");
+  let apiOverall = null;
+  let apiMissing = [];
+  let apiTotal = 0;
+  let apiCompleted = 0;
+  let apiPct = 0;
+  let gapNote = "";
+
+  if (!admissions._error) {
+    const enrollments = Array.isArray(admissions.cohorts) ? admissions.cohorts : [];
+    const cohorts = enrollments.map((e) => e.cohort).filter(Boolean);
+    const sorted = [...cohorts].sort(
+      (a, b) => (b.micro_cohorts?.length || 0) - (a.micro_cohorts?.length || 0)
+    );
+    const mainEnrollment = sorted.length > 0
+      ? enrollments.find((e) => e.cohort?.slug === sorted[0].slug)
+      : null;
+
+    if (mainEnrollment && mainEnrollment.completion) {
+      const c = mainEnrollment.completion;
+      apiOverall = c.overall;
+      if (apiOverall) {
+        apiTotal = apiOverall.total || 0;
+        apiCompleted = apiOverall.completed || 0;
+        apiPct = apiOverall.percent || 0;
+      }
+      if (c.required && c.required.PROJECT && Array.isArray(c.required.PROJECT.missing)) {
+        apiMissing = c.required.PROJECT.missing;
+      }
+
+      // Build gap explanation: which of 4Geeks' missing slugs are actually approved by slug-crossing
+      const approvedSlugs = new Set(
+        deduped.filter((t) => t.revision_status === "APPROVED").map((t) => t.associated_slug)
+      );
+      const actuallyMissing = apiMissing.filter((slug) => !approvedSlugs.has(slug));
+      const falseMissing = apiMissing.filter((slug) => approvedSlugs.has(slug));
+
+      if (falseMissing.length > 0) {
+        const slugList = falseMissing.map((s) => `\`${s}\``).join(", ");
+        gapNote = `\n\nDe los ${apiMissing.length} que 4Geeks cuenta como pendientes, ${falseMissing.length} estan aprobados en sus modulos. ${actuallyMissing.length > 0 ? `El unico pendiente de verdad es ${actuallyMissing[0]}.` : "En realidad no hay ninguno."}`;
+      } else if (apiMissing.length > 0) {
+        gapNote = `\n\nTodos los ${apiMissing.length} que 4Geeks cuenta como pendientes coinciden con los que tienes sin entregar.`;
+      }
+    }
+  }
+
   const lines = [
     tokenLine(),
     `\ud83d\udcca ${deduped.length} unicos (${raw.received} filas de ${raw.expected})`,
@@ -368,6 +426,15 @@ async function handleGetProgress(args) {
     `\ud83e\udd13 Hechos sin revision formal: ${autoDone}`,
   ];
   if (ignored > 0) lines.push(`\u2b1c Ignorados: ${ignored}`);
+
+  if (apiOverall) {
+    lines.push("");
+    lines.push(`**4Geeks oficial (cohorte principal):** ${apiCompleted}/${apiTotal} = ${apiPct}%`);
+    if (apiMissing.length > 0) {
+      lines.push(`   ${apiMissing.length} pendientes segun plataforma: ${apiMissing.join(", ")}`);
+    }
+  }
+  if (gapNote) lines.push(gapNote);
 
   return lines.join("\n");
 }

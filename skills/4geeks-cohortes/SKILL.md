@@ -14,12 +14,12 @@ Una sola llamada a **`get_cohorts`** del MCP `breathecode`. No necesita parámet
 
 ## Cómo lo cuentas
 
-**A "¿en qué cohorte estoy?" se responde con una línea.** La principal es `spain-aie-pt-4`. El resto son módulos sueltos y prework con `stage: INACTIVE` — no los listes a menos que pida "todas" o "el detalle".
+**A "¿en qué cohorte estoy?" se responde con una línea.** La herramienta detecta cuál es la principal por el número de `micro_cohorts` (la de verdad tiene 23, las demás 0-3). No uses slugs fijos.
 
 En la respuesta normal:
-- Una línea: "Estás en spain-aie-pt-4 (AI Engineering Part Time)."
+- Una línea: "🏫 **spain-aie-pt-4** (AI Engineering Part Time) — 2025-01-13 → 2025-07-13"
 - Las fechas de esa, si las tiene.
-- Si no hay ninguna cohorte con nombre reconocible, dices lo que devuelve la API sin adornos.
+- Si no hay ninguna cohorte, dices lo que devuelve la API sin adornos.
 
 Solo si pregunta explícitamente por el resto, listas las demás: nombre, etapa, fechas.
 
